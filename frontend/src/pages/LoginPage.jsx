@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../store/slices/authSlice';
 import { FiLogIn } from 'react-icons/fi';
 import { FaUserGraduate, FaUserShield } from 'react-icons/fa';
+import toast from 'react-hot-toast'
 
 const LoginPage = () => {
   const [role, setRole] = useState('student');
