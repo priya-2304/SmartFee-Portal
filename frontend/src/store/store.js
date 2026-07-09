@@ -1,9 +1,9 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
-import feeReducer from "./slices/feeSlice";
-import uiReducer from "./slices/uiSlice";
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './slices/authSlice';
+import feeReducer from './slices/feeSlice';
+import uiReducer from './slices/uiSlice';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
     auth: authReducer,
     fee: feeReducer,
@@ -11,4 +11,5 @@ const store = configureStore({
   },
 });
 
-export default store;
+
+// export default store;

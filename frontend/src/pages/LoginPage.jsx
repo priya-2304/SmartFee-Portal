@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../store/slices/authSlice';
 import { FiLogIn } from 'react-icons/fi';
 import { FaUserGraduate, FaUserShield } from 'react-icons/fa';
-import toast from 'react-hot-toast'
 
 const LoginPage = () => {
   const [role, setRole] = useState('student');
@@ -33,8 +32,7 @@ const LoginPage = () => {
           ? '/dashboard'
           : '/admin/dashboard'
       );
-    }
-  };
+    }};
 
   return (
     <div
@@ -42,9 +40,7 @@ const LoginPage = () => {
       style={{
         background:
           'linear-gradient(135deg, #e0f0ff 0%, #ffffff 50%, #dbeafe 100%)',
-      }}
-    >
-      {/* Background Blurs */}
+      }}>
       <div
         style={{
           position: 'fixed',
@@ -72,8 +68,6 @@ const LoginPage = () => {
           zIndex: 0,
         }}
       />
-
-      {/* Card */}
       <div
         style={{
           position: 'relative',
@@ -88,7 +82,6 @@ const LoginPage = () => {
           padding: '36px 32px',
         }}
       >
-        {/* Logo */}
         <div
           style={{
             width: '56px',
@@ -338,40 +331,46 @@ const LoginPage = () => {
               justifyContent: 'center',
               gap: '8px',
               marginTop: '4px',
-            }}
-          >
+            }}   >
             <FiLogIn size={17} />
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: '18px',
-            fontSize: '13px',
-          }}
-        >
-          <Link
-            to="/forgot-password"
-            style={{
-              color: '#3b82f6',
-              textDecoration: 'none',
-            }}
-          >
-            Forgot Password?
-          </Link>
-        </div>
+     <div
+  style={{
+    textAlign: "center",
+    marginTop: "18px",
+    fontSize: "13px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  }} >
+  <Link
+    to="/forgot-password"
+    style={{
+      color: "#3b82f6",
+      textDecoration: "none",
+    }} >Forgot Password?
+  </Link>
 
-        <p
-          style={{
-            textAlign: 'center',
-            fontSize: '11px',
-            color: '#94a3b8',
-            marginTop: '20px',
-          }}
-        >
-          SmartFee Portal &copy; {new Date().getFullYear()}
+  {role === "student" && (
+    <p style={{ color: "#64748b", margin: 0 }}>
+     New Student?{" "}
+      <Link
+        to="/register"
+        style={{
+          color: "#2563eb",
+          fontWeight: "600",
+          textDecoration: "none",
+        }}>
+        Register Here
+      </Link>
+    </p>
+  )}
+</div>
+  <p  style={{ textAlign: 'center', fontSize: '11px', color: '#94a3b8', marginTop: '20px',}}>
+      SmartFee Portal &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>
