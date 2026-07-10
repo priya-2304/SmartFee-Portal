@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../store/slices/authSlice';
-import { FiLogIn } from 'react-icons/fi';
-import { FaUserGraduate, FaUserShield } from 'react-icons/fa';
+import { FiLogIn , FiUserCheck,  } from 'react-icons/fi';
+import { FaUserGraduate, FaUserShield} from 'react-icons/fa';
 
 const LoginPage = () => {
   const [role, setRole] = useState('student');
@@ -27,12 +27,14 @@ const LoginPage = () => {
     );
 
     if (loginUser.fulfilled.match(result)) {
+      const actualRole = result.payload.user.role; 
       navigate(
         role === 'student'
           ? '/dashboard'
           : '/admin/dashboard'
       );
-    }};
+    }
+  };
 
   return (
     <div
@@ -40,7 +42,8 @@ const LoginPage = () => {
       style={{
         background:
           'linear-gradient(135deg, #e0f0ff 0%, #ffffff 50%, #dbeafe 100%)',
-      }}>
+      }}
+    >
       <div
         style={{
           position: 'fixed',
@@ -123,7 +126,6 @@ const LoginPage = () => {
           Online Fee Payment & Finance Management
         </p>
 
-        {/* Login As */}
         <div style={{ marginBottom: '18px' }}>
           <div
             style={{
@@ -223,6 +225,9 @@ const LoginPage = () => {
               <FaUserShield />
               Admin
             </button>
+             <button type="button" onClick={() => setRole('hod')} style={{ flex: 1, padding: '12px', border: 'none', cursor: 'pointer', background: role === 'hod' ? '#eff6ff' : '#fff', color: role === 'hod' ? '#2563eb' : '#475569', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', borderRight: '1px solid #dbeafe' }}>
+             <FiUserCheck /> HOD
+          </button>
           </div>
         </div>
 
@@ -245,8 +250,10 @@ const LoginPage = () => {
               }}
             >
               {role === 'student'
-                ? 'Enrollment Number'
-                : 'Admin ID'}
+                  ? 'Enrollment Number'
+                  : role === 'hod'
+                  ? 'HOD ID'
+                  : 'Admin ID'}
             </label>
 
             <input
@@ -255,10 +262,12 @@ const LoginPage = () => {
                 setEnrollmentNo(e.target.value)
               }
               placeholder={
-                role === 'student'
-                  ? 'e.g. CSE2023001'
-                  : 'e.g. ADMIN001'
-              }
+              role === 'student'
+                ? 'e.g. CSE2023001'
+                : role === 'hod'
+                ? 'e.g. HOD-CSE-01'
+                : 'e.g. ADMIN001' }
+                
               required
               style={{
                 width: '100%',
@@ -331,13 +340,14 @@ const LoginPage = () => {
               justifyContent: 'center',
               gap: '8px',
               marginTop: '4px',
-            }}   >
+            }}
+          >
             <FiLogIn size={17} />
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-     <div
+        <div
   style={{
     textAlign: "center",
     marginTop: "18px",
@@ -345,32 +355,44 @@ const LoginPage = () => {
     display: "flex",
     flexDirection: "column",
     gap: "10px",
-  }} >
+  }}
+>
   <Link
     to="/forgot-password"
     style={{
       color: "#3b82f6",
       textDecoration: "none",
-    }} >Forgot Password?
+    }}
+  >
+    Forgot Password?
   </Link>
 
   {role === "student" && (
     <p style={{ color: "#64748b", margin: 0 }}>
-     New Student?{" "}
+      New Student?{" "}
       <Link
         to="/register"
         style={{
           color: "#2563eb",
           fontWeight: "600",
           textDecoration: "none",
-        }}>
+        }}
+      >
         Register Here
       </Link>
     </p>
   )}
 </div>
-  <p  style={{ textAlign: 'center', fontSize: '11px', color: '#94a3b8', marginTop: '20px',}}>
-      SmartFee Portal &copy; {new Date().getFullYear()}
+
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: '11px',
+            color: '#94a3b8',
+            marginTop: '20px',
+          }}
+        >
+          SmartFee Portal &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>
