@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchStudentFees } from '../store/slices/feeSlice';
@@ -11,9 +11,43 @@ const StudentDashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const { summary, feeHeads, loading } = useSelector((state) => state.fee);
 
+  const [selectedSemester, setSelectedSemester] = useState('');
+
   useEffect(() => {
-    if (user?.id) dispatch(fetchStudentFees(user.id));
+    if (user?.id) {
+      dispatch(fetchStudentFees(user.id));
+    }
   }, [dispatch, user]);
+
+  const availableSemesters = useMemo(() => {
+    if (!feeHeads?.length) return [];
+    const valid = feeHeads
+      .map((f) => f.semester)
+      .filter((sem) => sem !== null && sem !== undefined && !Number.isNaN(Number(sem)));
+    return [...new Set(valid)].sort((a, b) => a - b);
+  }, [feeHeads]);
+
+  useEffect(() => {
+    if (availableSemesters.length > 0 && !availableSemesters.includes(Number(selectedSemester))) {
+      setSelectedSemester(String(availableSemesters[0]));
+    }
+  }, [availableSemesters]); 
+
+  const filteredFeeHeads = useMemo(() => {
+    if (!feeHeads || !selectedSemester) return [];
+    return feeHeads.filter((f) => String(f.semester) === String(selectedSemester));
+  }, [feeHeads, selectedSemester]);
+
+  const semesterSummary = useMemo(() => {
+    const totalFees = filteredFeeHeads.reduce((sum, f) => sum + f.amountDue, 0);
+    const paidFees = filteredFeeHeads.reduce((sum, f) => sum + f.amountPaid, 0);
+    const scholarshipApplied = filteredFeeHeads.reduce((sum, f) => sum + (f.scholarshipApplied || 0), 0);
+    const pendingFees = filteredFeeHeads.reduce(
+      (sum, f) => sum + Math.max(f.amountDue - f.amountPaid - (f.scholarshipApplied || 0), 0),
+      0
+    );
+    return { totalFees, paidFees, pendingFees, scholarshipApplied };
+  }, [filteredFeeHeads]);
 
   const statusStyle = (s) => ({
     paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -23,7 +57,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Welcome, {user?.name} 👋</h1>
@@ -31,54 +65,67 @@ const StudentDashboard = () => {
             {user?.branch} &bull; Year {user?.year} &bull; Batch {user?.batch}
           </p>
         </div>
-        <Link to="/pay-fee" className="btn-primary flex items-center gap-2 self-start sm:self-auto">
-          Pay Fee <FiArrowRight size={15} />
-        </Link>
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          {availableSemesters.length > 0 && (
+            <select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
+              className="input-field text-med py-2 px-3 w-auto bg-blue-600 text-white font-medium"
+            >
+              {availableSemesters.map((sem) => (
+                <option key={sem} value={sem}>
+                  Semester {sem}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <Link to="/pay-fee" className="btn-primary flex items-center gap-2">
+            Pay Fee <FiArrowRight size={15} />
+          </Link>
+        </div>
       </div>
 
-      {/* Stats */}
-      {loading || !summary ? (
+      {loading || !feeHeads ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <StatCard label="Total Fees" value={`₹${summary.totalFees.toLocaleString()}`} icon={FiDollarSign} accent="primary" />
-          <StatCard label="Paid" value={`₹${summary.paidFees.toLocaleString()}`} icon={FiCheckCircle} accent="green" />
-          <StatCard label="Pending" value={`₹${summary.pendingFees.toLocaleString()}`} icon={FiAlertTriangle} accent="red" />
+          <StatCard label="Total Fees" value={`₹${semesterSummary.totalFees.toLocaleString()}`} icon={FiDollarSign} accent="primary" />
+          <StatCard label="Paid" value={`₹${semesterSummary.paidFees.toLocaleString()}`} icon={FiCheckCircle} accent="green" />
+          <StatCard label="Pending" value={`₹${semesterSummary.pendingFees.toLocaleString()}`} icon={FiAlertTriangle} accent="red" />
           <StatCard
             label="Due Date"
-            value={summary.dueDate ? new Date(summary.dueDate).toLocaleDateString() : 'N/A'}
+            value={summary?.dueDate ? new Date(summary.dueDate).toLocaleDateString() : 'N/A'}
             icon={FiCalendar}
             accent="amber"
           />
-          <StatCard label="Scholarship" value={`₹${summary.scholarshipCredits.toLocaleString()}`} icon={FiAward} accent="primary" />
+          <StatCard label="Scholarship" value={`₹${semesterSummary.scholarshipApplied.toLocaleString()}`} icon={FiAward} accent="primary" />
         </div>
       )}
 
-      {/* Progress bar */}
-      {summary && summary.totalFees > 0 && (
+      {semesterSummary.totalFees > 0 && (
         <div className="card">
           <div className="flex justify-between text-sm mb-2">
             <span className="font-medium">Payment Progress</span>
             <span className="text-primary-600 font-semibold">
-              {Math.round((summary.paidFees / summary.totalFees) * 100)}%
+              {Math.round((semesterSummary.paidFees / semesterSummary.totalFees) * 100)}%
             </span>
           </div>
           <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-700"
-              style={{ width: `${Math.min((summary.paidFees / summary.totalFees) * 100, 100)}%` }}
+              style={{ width: `${Math.min((semesterSummary.paidFees / semesterSummary.totalFees) * 100, 100)}%` }}
             />
           </div>
           <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>₹{summary.paidFees.toLocaleString()} paid</span>
-            <span>₹{summary.pendingFees.toLocaleString()} remaining</span>
+            <span>₹{semesterSummary.paidFees.toLocaleString()} paid</span>
+            <span>₹{semesterSummary.pendingFees.toLocaleString()} remaining</span>
           </div>
         </div>
       )}
 
-      {/* Fee heads table */}
       <div className="card">
         <h2 className="font-semibold mb-4">Fee Details</h2>
         <div className="table-wrap">
@@ -93,12 +140,14 @@ const StudentDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-              {feeHeads?.map((f) => (
+              {filteredFeeHeads?.map((f) => (
                 <tr key={f._id}>
                   <td className="py-3 font-medium">{f.feeHead}</td>
                   <td className="py-3">₹{f.amountDue.toLocaleString()}</td>
                   <td className="py-3 text-green-600">₹{f.amountPaid.toLocaleString()}</td>
-                  <td className="py-3 text-red-500">₹{(f.amountDue - f.amountPaid).toLocaleString()}</td>
+                  <td className="py-3 text-red-500">
+                    ₹{Math.max(f.amountDue - f.amountPaid - (f.scholarshipApplied || 0), 0).toLocaleString()}
+                  </td>
                   <td className="py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyle(f.status)}`}>
                       {f.status}
@@ -106,7 +155,7 @@ const StudentDashboard = () => {
                   </td>
                 </tr>
               ))}
-              {!loading && (!feeHeads || feeHeads.length === 0) && (
+              {!loading && (!filteredFeeHeads || filteredFeeHeads.length === 0) && (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-gray-400 text-sm">
                     No fee structure assigned yet. Contact accounts department.
