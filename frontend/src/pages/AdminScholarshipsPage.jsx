@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { FiAward, FiCheck, FiX } from 'react-icons/fi';
+import { useSelector } from 'react-redux';
 
 const statusBadge = (s) =>
   ({
@@ -15,6 +16,7 @@ const AdminScholarshipsPage = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
   const [actingId, setActingId] = useState(null);
+ const { user } = useSelector((state) => state.auth); 
 
   const fetchAll = async () => {
     setLoading(true);
@@ -30,7 +32,7 @@ const AdminScholarshipsPage = () => {
 
   useEffect(() => {
     fetchAll();
-    }, [filter]);
+  }, [filter]);
 
   const act = async (id, status) => {
     setActingId(id);
@@ -92,7 +94,7 @@ const AdminScholarshipsPage = () => {
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusBadge(s.status)}`}>
                     {s.status}
                   </span>
-                  {s.status === 'pending' && (
+                  {s.status === 'pending' && user?.role === 'admin' && (
                     <>
                       <button
                         disabled={actingId === s._id}
@@ -110,16 +112,12 @@ const AdminScholarshipsPage = () => {
                       >
                         <FiX size={16} />
                       </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </> )}
+                </div> </div> ))}
           </div>
         )}
       </div>
     </div>
   );
 };
-
 export default AdminScholarshipsPage;
