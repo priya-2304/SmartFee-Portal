@@ -120,4 +120,5 @@ const AdminScholarshipsPage = () => {
     </div>
   );
 };
+
 export default AdminScholarshipsPage;
