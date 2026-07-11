@@ -19,15 +19,66 @@ const Register = () => {
 
   const [loading, setLoading] = useState(false);
 
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+   if (e.target.name === "email" && emailVerified) {
+      setEmailVerified(false);
+      setOtpSent(false);
+      setOtp("");
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!formData.email) {
+      return alert("Enter your email first");
+    }
+    try {
+      setSendingOtp(true);
+      const res = await api.post("/auth/send-register-otp", { email: formData.email });
+      alert(res.data.message || "OTP sent to your email");
+      setOtpSent(true);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      return alert("Enter the 6-digit OTP");
+    }
+    try {
+      setVerifyingOtp(true);
+      const res = await api.post("/auth/verify-register-otp", {
+        email: formData.email,
+        otp,
+      });
+      alert(res.data.message || "Email verified");
+      setEmailVerified(true);
+    } catch (err) {
+      alert(err.response?.data?.message || "Invalid or expired OTP");
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!emailVerified) {
+      return alert("Please verify your email with OTP before registering");
+    }
 
     if (formData.password !== formData.confirmPassword) {
       return alert("Passwords do not match");
@@ -85,15 +136,50 @@ const Register = () => {
             className="w-full border rounded-lg px-4 py-2"
           />
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="w-full border rounded-lg px-4 py-2"
-          />
+          {/* Email + Send OTP */}
+          <div className="flex gap-2">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              disabled={emailVerified}
+              className="flex-1 border rounded-lg px-4 py-2 disabled:bg-gray-100"
+            />
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={sendingOtp || emailVerified || !formData.email}
+              className="whitespace-nowrap bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white px-4 rounded-lg text-sm font-medium"
+            >
+              {emailVerified ? "Verified ✓" : sendingOtp ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
+            </button>
+          </div>
+
+          {/* OTP input */}
+          {otpSent && !emailVerified && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                className="flex-1 border rounded-lg px-4 py-2"
+              />
+              <button
+                type="button"
+                onClick={handleVerifyOtp}
+                disabled={verifyingOtp}
+                className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 rounded-lg text-sm font-medium"
+              >
+                {verifyingOtp ? "Verifying..." : "Verify OTP"}
+              </button>
+            </div>
+          )}
 
           <input
             type="text"
@@ -158,10 +244,10 @@ const Register = () => {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
+            disabled={loading || !emailVerified}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-3 rounded-lg font-semibold"
           >
-            {loading ? "Registering..." : "Register"}
+            {loading ? "Registering..." : !emailVerified ? "Verify Email to Continue" : "Register"}
           </button>
         </form>
 
