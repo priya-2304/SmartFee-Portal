@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
+import api from '../api/axios';
 import {
   fetchStudentFees,
   initiatePayment,
@@ -8,7 +9,7 @@ import {
   initiateBulkPayment,
   verifyBulkPayment,
 } from '../store/slices/feeSlice';
-import { FiCheckCircle, FiCreditCard, FiZap } from 'react-icons/fi';
+import { FiCheckCircle, FiCreditCard, FiZap, FiFileText } from 'react-icons/fi';
 
 const METHODS = [
   { id: 'upi', label: '📱 UPI' },
@@ -22,34 +23,25 @@ const PayFeePage = () => {
   const { user } = useSelector((state) => state.auth);
   const { feeHeads, summary, loading } = useSelector((state) => state.fee);
 
-  // 'full' | 'individual'
   const [mode, setMode] = useState('full');
   const [selected, setSelected] = useState(null);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('upi');
   const [processing, setProcessing] = useState(false);
-
-  // Semester filter — payment happens per semester only
   const [selectedSemester, setSelectedSemester] = useState('');
 
   useEffect(() => {
     if (user?.id) dispatch(fetchStudentFees(user.id));
   }, [dispatch, user]);
-
-  // Semesters derived straight from the student's fee heads
   const availableSemesters = useMemo(() => {
     if (!feeHeads?.length) return [];
     return [...new Set(feeHeads.map((f) => f.semester))].sort((a, b) => a - b);
   }, [feeHeads]);
-
-  // Auto-select the first semester once fee heads load
   useEffect(() => {
     if (availableSemesters.length > 0 && !availableSemesters.includes(Number(selectedSemester))) {
       setSelectedSemester(String(availableSemesters[0]));
     }
-  }, [availableSemesters]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Only this semester's fee heads from here on
+  }, [availableSemesters]); 
   const semesterFeeHeads = useMemo(() => {
     if (!feeHeads || !selectedSemester) return [];
     return feeHeads.filter((f) => String(f.semester) === String(selectedSemester));
@@ -112,7 +104,20 @@ const PayFeePage = () => {
     });
   };
 
-  // Pay ALL pending fee heads of the SELECTED SEMESTER together
+  const downloadChallan = async (feePaymentId) => {
+  try {
+    const res = await api.get(`/fees/${feePaymentId}/challan`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fee-challan.pdf';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    toast.error('Failed to generate challan');
+  }
+};
+
   const payFullFee = async () => {
     if (pendingHeads.length === 0) return;
     if (totalPending <= 0) return toast.error('No pending fees to pay');
@@ -163,7 +168,6 @@ const PayFeePage = () => {
     rzp.open();
   };
 
-  // Pay a single fee head (partial or full)
   const paySingle = async () => {
     if (!selected) return;
     const amt = Number(amount);
@@ -211,11 +215,9 @@ const PayFeePage = () => {
         )}
       </div>
 
-      {/* ── Mode Toggle ── */}
       <div className="card">
         <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Choose how you want to pay:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Pay All at Once */}
           <button
             onClick={() => { setMode('full'); setSelected(null); setAmount(String(totalPending)); }}
             className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all ${
@@ -237,8 +239,6 @@ const PayFeePage = () => {
               )}
             </div>
           </button>
-
-          {/* Pay One by One */}
           <button
             onClick={() => { setMode('individual'); setSelected(null); }}
             className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all ${
@@ -259,7 +259,6 @@ const PayFeePage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left – fee head list (this semester only) */}
         <div className="lg:col-span-2 space-y-3">
           {loading ? (
             <div className="card text-sm text-gray-500">Loading fee details...</div>
@@ -307,24 +306,27 @@ const PayFeePage = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!isPaid && (
-                        <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                          ₹{balance.toLocaleString()} due
-                        </span>
-                      )}
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusBadge(f.status)}`}>
-                        {f.status}
-                      </span>
-                    </div>
+                   <div className="flex items-center gap-2">
+          {!isPaid && (
+           <span className="text-sm font-bold text-red-600 dark:text-red-400">
+              ₹{balance.toLocaleString()} due
+            </span>
+          )}
+          {!isPaid && (
+            <button onClick={(e) => { e.stopPropagation(); downloadChallan(f._id); }}
+              className="text-xs px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-1">
+            <FiFileText size={12} /> Challan
+            </button>)}
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusBadge(f.status)}`}>
+            {f.status}
+          </span>
+            </div>
                   </div>
                 </button>
               );
             })
           )}
         </div>
-
-        {/* Right – payment panel */}
         <div className="card h-fit space-y-4">
           <h2 className="font-semibold">
             {mode === 'full' ? `Pay Semester ${selectedSemester} Dues` : selected ? `Pay – ${selected.feeHead}` : 'Select a Fee Head'}
