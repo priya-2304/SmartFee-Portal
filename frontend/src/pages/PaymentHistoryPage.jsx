@@ -4,7 +4,7 @@ import { fetchPaymentHistory } from '../store/slices/feeSlice';
 import { TableSkeleton } from '../components/Skeletons';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiEye } from 'react-icons/fi';
 
 const PaymentHistoryPage = () => {
   const dispatch = useDispatch();
@@ -15,13 +15,23 @@ const PaymentHistoryPage = () => {
   const downloadReceipt = async (feePaymentId) => {
     try {
       const res = await api.get(`/receipts/${feePaymentId}/pdf`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const a = document.createElement('a');
       a.href = url;
       a.download = 'receipt.pdf';
       document.body.appendChild(a);
       a.click();
       a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch { toast.error('Receipt not available yet'); }
+  };
+
+  const previewReceipt = async (feePaymentId) => {
+    try {
+      const res = await api.get(`/receipts/${feePaymentId}/pdf`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60 * 1000);
     } catch { toast.error('Receipt not available yet'); }
   };
 
@@ -37,7 +47,6 @@ const PaymentHistoryPage = () => {
 
       {loading ? <TableSkeleton /> : (
         <>
-         
           <div className="card hidden sm:block">
             <div className="table-wrap">
               <table className="w-full text-sm">
@@ -65,9 +74,14 @@ const PaymentHistoryPage = () => {
                       </td>
                       <td className="py-3">
                         {t.status === 'success' && t.feePaymentId?._id && (
-                          <button onClick={() => downloadReceipt(t.feePaymentId._id)} className="text-primary-600 hover:underline flex items-center gap-1 text-xs">
-                            <FiDownload size={13} /> PDF
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => previewReceipt(t.feePaymentId._id)} className="text-gray-500 hover:text-primary-600 hover:underline flex items-center gap-1 text-xs">
+                              <FiEye size={13} /> Preview
+                            </button>
+                            <button onClick={() => downloadReceipt(t.feePaymentId._id)} className="text-primary-600 hover:underline flex items-center gap-1 text-xs">
+                              <FiDownload size={13} /> PDF
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -79,8 +93,6 @@ const PaymentHistoryPage = () => {
               </table>
             </div>
           </div>
-
-         
           <div className="sm:hidden space-y-3">
             {history?.map((t) => (
               <div key={t._id} className="card space-y-2">
@@ -96,9 +108,14 @@ const PaymentHistoryPage = () => {
                 <p className="text-lg font-bold text-primary-700 dark:text-primary-300">₹{t.amount.toLocaleString()}</p>
                 <p className="font-mono text-xs text-gray-400 truncate">{t.gatewayReference}</p>
                 {t.status === 'success' && t.feePaymentId?._id && (
-                  <button onClick={() => downloadReceipt(t.feePaymentId._id)} className="text-primary-600 flex items-center gap-1 text-sm">
-                    <FiDownload size={14} /> Download Receipt
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => previewReceipt(t.feePaymentId._id)} className="text-gray-500 flex items-center gap-1 text-sm">
+                      <FiEye size={14} /> Preview
+                    </button>
+                    <button onClick={() => downloadReceipt(t.feePaymentId._id)} className="text-primary-600 flex items-center gap-1 text-sm">
+                      <FiDownload size={14} /> Download
+                    </button>
+                  </div>
                 )}
               </div>
             ))}

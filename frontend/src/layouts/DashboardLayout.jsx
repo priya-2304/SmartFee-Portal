@@ -56,10 +56,13 @@ const DashboardLayout = () => {
         />
       )}
 
+      {/* Sidebar */}
       <aside
         className={`fixed lg:sticky lg:top-0 lg:h-screen z-30 inset-y-0 left-0 w-64 flex-shrink-0 transform ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out glass border-r border-white/30 dark:border-gray-700/50 flex flex-col`}>
+        } lg:translate-x-0 transition-transform duration-300 ease-in-out glass border-r border-white/30 dark:border-gray-700/50 flex flex-col`}
+      >
+        {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b border-white/20 dark:border-gray-700/50">
           <div>
             <span className="text-base font-bold text-primary-700 dark:text-primary-300 block leading-tight">
@@ -75,6 +78,7 @@ const DashboardLayout = () => {
           </button>
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -94,8 +98,14 @@ const DashboardLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* User + Logout */}
         <div className="p-3 border-t border-white/20 dark:border-gray-700/50 space-y-1">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/60">
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/60 hover:bg-primary-50 dark:hover:bg-gray-700/60 transition-colors text-left"
+            title="View Profile"
+          >
             {user?.profilePicUrl ? (
               <img src={user.profilePicUrl?.startsWith('http')? user.profilePicUrl:`${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`} alt="" className="w-8 h-8 rounded-full object-cover" />):(
               <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
@@ -106,7 +116,7 @@ const DashboardLayout = () => {
               <p className="text-xs font-semibold truncate">{user?.name}</p>
               <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
             </div>
-          </div>
+          </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -116,7 +126,9 @@ const DashboardLayout = () => {
         </div>
       </aside>
 
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:max-h-screen lg:overflow-y-auto">
+        {/* Top bar */}
         <header className="glass sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/30 dark:border-gray-700/50">
           <button
             className="lg:hidden p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -143,17 +155,24 @@ const DashboardLayout = () => {
               {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
             </button>
             <NotificationBell />
-            {user?.profilePicUrl ? (
-              <img
-               src={user.profilePicUrl?.startsWith('http') ? user.profilePicUrl : `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`}
-                alt=""
-                className="w-8 h-8 rounded-full object-cover border-2 border-primary-200"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-            )}
+            <button
+              onClick={() => navigate('/profile')}
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary-400"
+              title="View Profile"
+              aria-label="View Profile"
+            >
+              {user?.profilePicUrl ? (
+                <img
+                 src={user.profilePicUrl?.startsWith('http') ? user.profilePicUrl : `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover border-2 border-primary-200 hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold hover:opacity-80 transition-opacity">
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
+              )}
+            </button>
           </div>
         </header>
 
