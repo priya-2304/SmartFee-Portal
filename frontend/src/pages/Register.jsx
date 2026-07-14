@@ -136,7 +136,7 @@ const Register = () => {
             className="w-full border rounded-lg px-4 py-2"
           />
 
-          {/* Email + Send OTP */}
+         
           <div className="flex gap-2">
             <input
               type="email"
@@ -158,7 +158,7 @@ const Register = () => {
             </button>
           </div>
 
-          {/* OTP input */}
+          
           {otpSent && !emailVerified && (
             <div className="flex gap-2">
               <input
@@ -182,11 +182,15 @@ const Register = () => {
           )}
 
           <input
-            type="text"
+            type="tel"
             name="phone"
-            placeholder="Phone Number"
+            placeholder="Phone Number (10 digits)"
             value={formData.phone}
             onChange={handleChange}
+            required
+            pattern="[6-9][0-9]{9}"
+            title="Enter a valid 10-digit phone number"
+            maxLength={10}
             className="w-full border rounded-lg px-4 py-2"
           />
 
