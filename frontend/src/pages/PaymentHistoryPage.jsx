@@ -45,8 +45,10 @@ const PaymentHistoryPage = () => {
     <div className="space-y-5">
       <h1 className="text-xl sm:text-2xl font-bold">Payment History</h1>
 
+      {/* Mobile: cards view */}
       {loading ? <TableSkeleton /> : (
         <>
+          {/* Desktop table */}
           <div className="card hidden sm:block">
             <div className="table-wrap">
               <table className="w-full text-sm">
@@ -64,7 +66,13 @@ const PaymentHistoryPage = () => {
                   {history?.map((t) => (
                     <tr key={t._id}>
                       <td className="py-3 text-xs text-gray-500">{new Date(t.createdAt).toLocaleDateString()}</td>
-                      <td className="py-3">{t.feePaymentId?.feeHead || '—'}</td>
+                      <td className="py-3">
+                        {t.isBulk
+                          ? t.feePaymentIds?.length
+                            ? t.feePaymentIds.map((fp) => fp.feeHead).join(', ')
+                            : '—'
+                          : t.feePaymentId?.feeHead || '—'}
+                      </td>
                       <td className="py-3 font-semibold">₹{t.amount.toLocaleString()}</td>
                       <td className="py-3 font-mono text-xs text-gray-400 max-w-[120px] truncate">{t.gatewayReference}</td>
                       <td className="py-3">
@@ -73,7 +81,17 @@ const PaymentHistoryPage = () => {
                         </span>
                       </td>
                       <td className="py-3">
-                        {t.status === 'success' && t.feePaymentId?._id && (
+                        {t.status === 'success' && t.isBulk && t.feePaymentIds?.[0]?.receiptUrl && (
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => previewReceipt(t.feePaymentIds[0]._id)} className="text-gray-500 hover:text-primary-600 hover:underline flex items-center gap-1 text-xs">
+                              <FiEye size={13} /> Preview
+                            </button>
+                            <button onClick={() => downloadReceipt(t.feePaymentIds[0]._id)} className="text-primary-600 hover:underline flex items-center gap-1 text-xs">
+                              <FiDownload size={13} /> PDF
+                            </button>
+                          </div>
+                        )}
+                        {t.status === 'success' && !t.isBulk && t.feePaymentId?._id && (
                           <div className="flex items-center gap-3">
                             <button onClick={() => previewReceipt(t.feePaymentId._id)} className="text-gray-500 hover:text-primary-600 hover:underline flex items-center gap-1 text-xs">
                               <FiEye size={13} /> Preview
@@ -93,12 +111,20 @@ const PaymentHistoryPage = () => {
               </table>
             </div>
           </div>
+
+          {/* Mobile: card list */}
           <div className="sm:hidden space-y-3">
             {history?.map((t) => (
               <div key={t._id} className="card space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-semibold text-sm">{t.feePaymentId?.feeHead || 'Payment'}</p>
+                    <p className="font-semibold text-sm">
+                      {t.isBulk
+                        ? t.feePaymentIds?.length
+                          ? t.feePaymentIds.map((fp) => fp.feeHead).join(', ')
+                          : 'Payment'
+                        : t.feePaymentId?.feeHead || 'Payment'}
+                    </p>
                     <p className="text-xs text-gray-400">{new Date(t.createdAt).toLocaleString()}</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyle(t.status)}`}>
@@ -107,7 +133,17 @@ const PaymentHistoryPage = () => {
                 </div>
                 <p className="text-lg font-bold text-primary-700 dark:text-primary-300">₹{t.amount.toLocaleString()}</p>
                 <p className="font-mono text-xs text-gray-400 truncate">{t.gatewayReference}</p>
-                {t.status === 'success' && t.feePaymentId?._id && (
+                {t.status === 'success' && t.isBulk && t.feePaymentIds?.[0]?.receiptUrl && (
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => previewReceipt(t.feePaymentIds[0]._id)} className="text-gray-500 flex items-center gap-1 text-sm">
+                      <FiEye size={14} /> Preview
+                    </button>
+                    <button onClick={() => downloadReceipt(t.feePaymentIds[0]._id)} className="text-primary-600 flex items-center gap-1 text-sm">
+                      <FiDownload size={14} /> Download
+                    </button>
+                  </div>
+                )}
+                {t.status === 'success' && !t.isBulk && t.feePaymentId?._id && (
                   <div className="flex items-center gap-4">
                     <button onClick={() => previewReceipt(t.feePaymentId._id)} className="text-gray-500 flex items-center gap-1 text-sm">
                       <FiEye size={14} /> Preview
