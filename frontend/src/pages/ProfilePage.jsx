@@ -20,11 +20,14 @@ const ProfilePage = () => {
   useEffect(() => {
     api.get('/auth/me').then(({ data }) => {
       if (data?.user) {
-        dispatch(updateUser({ phone: data.user.phone || null }));
+      dispatch(
+      updateUser({
+    phone: data.user.phone || null,
+    profilePicUrl: data.user.profilePicUrl || null,
+     }));
         setPhoneInput((prev) => prev || data.user.phone || '');
       }
     }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSavePhone = async () => {
@@ -72,9 +75,14 @@ const ProfilePage = () => {
   }
 };
 
-  const picSrc = preview
-    || (user?.profilePicUrl ? `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}` : null);
-    
+ const picSrc =
+  preview ||
+  (user?.profilePicUrl
+    ? user.profilePicUrl.startsWith("http")
+      ? `${user.profilePicUrl}?t=${Date.now()}`
+      : `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`
+    : null);
+
   const fields = [
     { icon: FiUser,     label: 'Full Name',          value: user?.name },
     { icon: FiTag,      label: 'Enrollment Number',  value: user?.enrollmentNo },
@@ -136,7 +144,7 @@ const ProfilePage = () => {
           >
             {uploading ? 'Uploading...' : 'Change profile picture'}
           </button>
-          <p className="text-xs text-gray-400 mt-0.5">PNG, JPG or WebP · Max 2 MB</p>
+          <p className="text-xs text-gray-400 mt-0.5">PNG, JPG or WebP · Max 5 MB</p>
         </div>
       </div>
 
