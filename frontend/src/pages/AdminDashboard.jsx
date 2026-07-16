@@ -9,53 +9,60 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
-  ArcElement,
   Tooltip,
-  Legend,
   Filler,
 } from 'chart.js';
-import { Line, Doughnut, Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const DOUGHNUT_COLORS = ['#2563eb', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-
 const chartTextColor = () =>
   document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280';
+
+const chartGridColor = () =>
+  document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+
+
+const gradientFillPlugin = {
+  id: 'gradientFill',
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    gradient.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
+    gradient.addColorStop(1, 'rgba(37, 99, 235, 0)');
+    chart.data.datasets[0].backgroundColor = gradient;
+  },
+};
 
 const AdminDashboard = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/accounts/summary')
+    api.get('/admin/summary')
       .then((res) => setSummary(res.data.summary))
       .finally(() => setLoading(false));
   }, []);
 
+  const revenuePoints = summary?.monthlyRevenue || [];
+
   const revenueData = {
-    labels: (summary?.monthlyRevenue || []).map((m) => MONTHS[m._id.month - 1]),
+    labels: revenuePoints.map((m) => MONTHS[m._id.month - 1]),
     datasets: [
       {
         label: 'Collection',
-        data: (summary?.monthlyRevenue || []).map((m) => m.total),
+        data: revenuePoints.map((m) => m.total),
         borderColor: '#2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.15)',
-        pointBackgroundColor: '#2563eb',
-        tension: 0.35,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#2563eb',
+        pointBorderWidth: 2,
+        tension: 0.4,
         fill: true,
       },
     ],
@@ -64,68 +71,31 @@ const AdminDashboard = () => {
   const revenueOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: false },
       tooltip: {
+        backgroundColor: '#111827',
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: false,
+        titleFont: { weight: '600' },
         callbacks: { label: (ctx) => `₹${ctx.parsed.y.toLocaleString()}` },
       },
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: chartTextColor() } },
+      x: {
+        grid: { display: false },
+        ticks: { color: chartTextColor(), font: { size: 12 } },
+      },
       y: {
+        border: { display: false },
         ticks: {
           color: chartTextColor(),
+          font: { size: 12 },
           callback: (v) => `₹${(v / 1000).toFixed(0)}k`,
         },
-        grid: { color: 'rgba(150,150,150,0.1)' },
-      },
-    },
-  };
-
-  const feeHeadData = {
-    labels: (summary?.feeHeadBreakdown || []).map((f) => f._id),
-    datasets: [
-      {
-        data: (summary?.feeHeadBreakdown || []).map((f) => f.total),
-        backgroundColor: DOUGHNUT_COLORS,
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const feeHeadOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom', labels: { color: chartTextColor(), boxWidth: 12, padding: 12 } },
-      tooltip: {
-        callbacks: { label: (ctx) => `${ctx.label}: ₹${ctx.parsed.toLocaleString()}` },
-      },
-    },
-  };
-
-  const defaultersData = {
-    labels: (summary?.defaultersByBranch || []).map((b) => b._id),
-    datasets: [
-      {
-        label: 'Defaulters',
-        data: (summary?.defaultersByBranch || []).map((b) => b.count),
-        backgroundColor: '#f59e0b',
-        borderRadius: 6,
-        maxBarThickness: 40,
-      },
-    ],
-  };
-
-  const defaultersOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { color: chartTextColor() } },
-      y: {
-        ticks: { color: chartTextColor(), stepSize: 1 },
-        grid: { color: 'rgba(150,150,150,0.1)' },
+        grid: { color: chartGridColor() },
       },
     },
   };
@@ -149,39 +119,16 @@ const AdminDashboard = () => {
       )}
 
       {!loading && summary && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="card lg:col-span-2">
-            <h2 className="font-semibold mb-4">Revenue Trend — Last 6 Months</h2>
-            {!summary.monthlyRevenue?.length ? (
-              <p className="text-gray-400 text-sm">No revenue data yet.</p>
-            ) : (
-              <div style={{ height: 260 }}>
-                <Line data={revenueData} options={revenueOptions} />
-              </div>
-            )}
-          </div>
-
-          <div className="card">
-            <h2 className="font-semibold mb-4">Collection by Fee Head</h2>
-            {!summary.feeHeadBreakdown?.length ? (
-              <p className="text-gray-400 text-sm">No collection data yet.</p>
-            ) : (
-              <div style={{ height: 260 }}>
-                <Doughnut data={feeHeadData} options={feeHeadOptions} />
-              </div>
-            )}
-          </div>
-
-          <div className="card lg:col-span-3">
-            <h2 className="font-semibold mb-4">Defaulters by Branch</h2>
-            {!summary.defaultersByBranch?.length ? (
-              <p className="text-gray-400 text-sm">No defaulters 🎉</p>
-            ) : (
-              <div style={{ height: 220 }}>
-                <Bar data={defaultersData} options={defaultersOptions} />
-              </div>
-            )}
-          </div>
+        <div className="card">
+          <h2 className="font-semibold mb-1">Revenue Trend</h2>
+          <p className="text-xs text-gray-400 mb-4">Last 6 months</p>
+          {!revenuePoints.length ? (
+            <p className="text-gray-400 text-sm py-10 text-center">No revenue data yet.</p>
+          ) : (
+            <div style={{ height: 340 }}>
+              <Line data={revenueData} options={revenueOptions} plugins={[gradientFillPlugin]} />
+            </div>
+          )}
         </div>
       )}
     </div>

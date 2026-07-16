@@ -24,7 +24,7 @@ const PayFeePage = () => {
   const { feeHeads, summary, loading } = useSelector((state) => state.fee);
 
   const [mode, setMode] = useState('full');
-  const [selected, setSelected] = useState(null);
+  const [selectedMultiple, setSelectedMultiple] = useState([]);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('upi');
   const [processing, setProcessing] = useState(false);
@@ -48,7 +48,9 @@ const PayFeePage = () => {
   }, [feeHeads, selectedSemester]);
 
   const pendingHeads = semesterFeeHeads.filter((f) => f.status !== 'paid');
-  const totalPending = pendingHeads.reduce((s, f) => s + (f.amountDue - f.amountPaid), 0);
+
+  const getBalance = (f) => Math.max(f.amountDue - f.amountPaid - (f.scholarshipApplied || 0), 0);
+  const totalPending = pendingHeads.reduce((s, f) => s + getBalance(f), 0);
 
  const buildMethodConfig = () => ({
   netbanking: method === 'netbanking',
@@ -59,10 +61,15 @@ const PayFeePage = () => {
   emi: false,
 });
 
-  const openIndividual = (head) => {
+  const toggleHead = (head) => {
     setMode('individual');
-    setSelected(head);
-    setAmount(String(head.amountDue - head.amountPaid));
+    setSelectedMultiple((prev) => {
+      const isSelected = prev.some((h) => h._id === head._id);
+      const next = isSelected ? prev.filter((h) => h._id !== head._id) : [...prev, head];
+      const total = next.reduce((s, f) => s + getBalance(f), 0);
+      setAmount(next.length > 0 ? String(total) : '');
+      return next;
+    });
   };
 
   const openRazorpay = async (feePaymentId, payAmount) => {
@@ -169,9 +176,10 @@ const PayFeePage = () => {
   };
 
   const paySingle = async () => {
+    const selected = selectedMultiple[0];
     if (!selected) return;
     const amt = Number(amount);
-    const balance = selected.amountDue - selected.amountPaid;
+    const balance = getBalance(selected);
     if (amt <= 0 || amt > balance) {
       return toast.error(`Enter an amount between ₹1 and ₹${balance}`);
     }
@@ -179,10 +187,65 @@ const PayFeePage = () => {
     const ok = await openRazorpay(selected._id, amt);
     if (ok) {
       dispatch(fetchStudentFees(user.id));
-      setSelected(null);
+      setSelectedMultiple([]);
       setMode('individual');
     }
     setProcessing(false);
+  };
+
+  const paySelected = async () => {
+    if (selectedMultiple.length < 2) return;
+    const total = selectedMultiple.reduce((s, f) => s + getBalance(f), 0);
+    const amt = Number(amount);
+    if (amt <= 0 || amt > total) {
+      return toast.error(`Enter an amount between ₹1 and ₹${total}`);
+    }
+
+    if (!window.Razorpay) {
+      toast.error('Payment gateway not loaded. Please refresh the page.');
+      return;
+    }
+
+    setProcessing(true);
+    const feePaymentIds = selectedMultiple.map((h) => h._id);
+
+    const initRes = await dispatch(initiateBulkPayment({ feePaymentIds, paymentMethod: method, amount: amt }));
+    if (!initiateBulkPayment.fulfilled.match(initRes)) {
+      setProcessing(false);
+      return;
+    }
+
+    const { order, razorpayKeyId } = initRes.payload;
+
+    const rzp = new window.Razorpay({
+      key: razorpayKeyId,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'SmartFee Portal',
+      description: `${selectedMultiple.length} selected fee head(s) – Semester ${selectedSemester}`,
+      order_id: order.id,
+      prefill: { name: user?.name, email: user?.email },
+      theme: { color: '#2563eb' },
+      method: buildMethodConfig(),
+      handler: async (response) => {
+        const verifyRes = await dispatch(
+          verifyBulkPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            feePaymentIds,
+          })
+        );
+        if (verifyBulkPayment.fulfilled.match(verifyRes)) {
+          dispatch(fetchStudentFees(user.id));
+          setSelectedMultiple([]);
+          setAmount('');
+        }
+        setProcessing(false);
+      },
+      modal: { ondismiss: () => setProcessing(false) },
+    });
+    rzp.open();
   };
 
   const statusBadge = (s) => ({
@@ -201,7 +264,7 @@ const PayFeePage = () => {
             value={selectedSemester}
             onChange={(e) => {
               setSelectedSemester(e.target.value);
-              setSelected(null);
+              setSelectedMultiple([]);
               setMode('full');
             }}
             className="input-field text-sm py-2 px-3 w-auto"
@@ -219,7 +282,7 @@ const PayFeePage = () => {
         <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Choose how you want to pay:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => { setMode('full'); setSelected(null); setAmount(String(totalPending)); }}
+            onClick={() => { setMode('full'); setSelectedMultiple([]); setAmount(String(totalPending)); }}
             className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all ${
               mode === 'full'
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
@@ -240,7 +303,7 @@ const PayFeePage = () => {
             </div>
           </button>
           <button
-            onClick={() => { setMode('individual'); setSelected(null); }}
+            onClick={() => { setMode('individual'); setSelectedMultiple([]); }}
             className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all ${
               mode === 'individual'
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
@@ -252,7 +315,7 @@ const PayFeePage = () => {
             </div>
             <div>
               <p className="font-semibold text-sm">Pay Individually</p>
-              <p className="text-xs text-gray-500 mt-0.5">Select a fee head, pay full or partial</p>
+              <p className="text-xs text-gray-500 mt-0.5">Check one or more fee heads to pay — full or partial for a single head</p>
             </div>
           </button>
         </div>
@@ -274,15 +337,15 @@ const PayFeePage = () => {
             </div>
           ) : (
             semesterFeeHeads.map((f) => {
-              const balance = f.amountDue - f.amountPaid;
+              const balance = getBalance(f);
               const isPaid = f.status === 'paid';
-              const isSelected = selected?._id === f._id;
+              const isSelected = selectedMultiple.some((h) => h._id === f._id);
 
               return (
                 <button
                   key={f._id}
                   disabled={isPaid || mode === 'full'}
-                  onClick={() => mode === 'individual' && !isPaid && openIndividual(f)}
+                  onClick={() => mode === 'individual' && !isPaid && toggleHead(f)}
                   className={`w-full text-left card transition-all ${
                     isPaid
                       ? 'opacity-60 cursor-not-allowed'
@@ -303,6 +366,7 @@ const PayFeePage = () => {
                         <p className="text-xs text-gray-500">
                           Due: ₹{f.amountDue.toLocaleString()}
                           {f.amountPaid > 0 && ` · Paid: ₹${f.amountPaid.toLocaleString()}`}
+                          {f.scholarshipApplied > 0 && ` · Scholarship: -₹${f.scholarshipApplied.toLocaleString()}`}
                         </p>
                       </div>
                     </div>
@@ -329,7 +393,13 @@ const PayFeePage = () => {
         </div>
         <div className="card h-fit space-y-4">
           <h2 className="font-semibold">
-            {mode === 'full' ? `Pay Semester ${selectedSemester} Dues` : selected ? `Pay – ${selected.feeHead}` : 'Select a Fee Head'}
+            {mode === 'full'
+              ? `Pay Semester ${selectedSemester} Dues`
+              : selectedMultiple.length === 1
+              ? `Pay – ${selectedMultiple[0].feeHead}`
+              : selectedMultiple.length > 1
+              ? `Pay – ${selectedMultiple.length} Fee Heads`
+              : 'Select Fee Head(s)'}
           </h2>
 
           {mode === 'full' && pendingHeads.length > 0 && (
@@ -374,26 +444,32 @@ const PayFeePage = () => {
             </>
           )}
 
-          {mode === 'individual' && !selected && (
+          {mode === 'individual' && selectedMultiple.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-4">
-              ← Select a fee head from the list
+              ← Check one or more fee heads from the list
             </p>
           )}
 
-          {mode === 'individual' && selected && (
+          {mode === 'individual' && selectedMultiple.length === 1 && (
             <>
               <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 text-sm space-y-1">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Total Due</span>
-                  <span>₹{selected.amountDue.toLocaleString()}</span>
+                  <span>₹{selectedMultiple[0].amountDue.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Already Paid</span>
-                  <span className="text-green-600">₹{selected.amountPaid.toLocaleString()}</span>
+                  <span className="text-green-600">₹{selectedMultiple[0].amountPaid.toLocaleString()}</span>
                 </div>
+                {selectedMultiple[0].scholarshipApplied > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Scholarship Credit</span>
+                    <span className="text-green-600">-₹{selectedMultiple[0].scholarshipApplied.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-semibold border-t dark:border-gray-600 pt-1 mt-1">
                   <span>Balance</span>
-                  <span className="text-red-500">₹{(selected.amountDue - selected.amountPaid).toLocaleString()}</span>
+                  <span className="text-red-500">₹{getBalance(selectedMultiple[0]).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -401,7 +477,7 @@ const PayFeePage = () => {
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-sm font-medium">Amount to Pay (₹)</label>
                   <button
-                    onClick={() => setAmount(String(selected.amountDue - selected.amountPaid))}
+                    onClick={() => setAmount(String(getBalance(selectedMultiple[0])))}
                     className="text-xs text-primary-600 hover:underline"
                   >
                     Pay full balance
@@ -412,11 +488,11 @@ const PayFeePage = () => {
                   className="input-field"
                   value={amount}
                   min={1}
-                  max={selected.amountDue - selected.amountPaid}
+                  max={getBalance(selectedMultiple[0])}
                   onChange={(e) => setAmount(e.target.value)}
                 />
                 <p className="text-xs text-gray-400 mt-1">
-                  You can pay partially — the remaining balance carries forward.
+                  You can pay partially — the remaining balance carries forward. Check another fee head to combine payments.
                 </p>
               </div>
 
@@ -441,6 +517,80 @@ const PayFeePage = () => {
 
               <button
                 onClick={paySingle}
+                disabled={processing || !amount}
+                className="btn-primary w-full py-3 text-base font-semibold"
+              >
+                {processing ? 'Processing...' : `Pay ₹${Number(amount || 0).toLocaleString()}`}
+              </button>
+              <p className="text-xs text-gray-400 text-center">
+                Powered by Razorpay · Secured payment
+              </p>
+            </>
+          )}
+
+          {mode === 'individual' && selectedMultiple.length > 1 && (
+            <>
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 text-sm space-y-1">
+                {selectedMultiple.map((f) => (
+                  <div key={f._id} className="flex justify-between">
+                    <span className="text-gray-500">{f.feeHead}</span>
+                    <span>₹{getBalance(f).toLocaleString()}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-semibold border-t dark:border-gray-600 pt-1 mt-1">
+                  <span>Combined Balance</span>
+                  <span className="text-red-500">
+                    ₹{selectedMultiple.reduce((s, f) => s + getBalance(f), 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium">Amount to Pay (₹)</label>
+                  <button
+                    onClick={() => setAmount(String(selectedMultiple.reduce((s, f) => s + getBalance(f), 0)))}
+                    className="text-xs text-primary-600 hover:underline"
+                  >
+                    Pay full balance
+                  </button>
+                </div>
+                <input
+                  type="number"
+                  className="input-field"
+                  value={amount}
+                  min={1}
+                  max={selectedMultiple.reduce((s, f) => s + getBalance(f), 0)}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Paying less than the combined balance fills{' '}
+                  <strong>{selectedMultiple[0]?.feeHead}</strong> first, then the next checked head, in the
+                  order you selected them — any remaining balance carries forward.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Method</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {METHODS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setMethod(m.id)}
+                      className={`text-xs px-2 py-2 rounded-xl border transition-all ${
+                        method === m.id
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 font-semibold text-primary-700 dark:text-primary-300'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-primary-300'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={paySelected}
                 disabled={processing || !amount}
                 className="btn-primary w-full py-3 text-base font-semibold"
               >

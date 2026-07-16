@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import toast from "react-hot-toast";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -40,23 +41,22 @@ const Register = () => {
 
   const handleSendOtp = async () => {
     if (!formData.email) {
-      return alert("Enter your email first");
+ return toast.error("Enter your email first");
     }
     try {
       setSendingOtp(true);
       const res = await api.post("/auth/send-register-otp", { email: formData.email });
-      alert(res.data.message || "OTP sent to your email");
-      setOtpSent(true);
+       toast.success(res.data.message || "OTP sent to your email"); setOtpSent(true);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to send OTP");
-    } finally {
+      toast.error(err.response?.data?.message || "Failed to send OTP");
+     } finally {
       setSendingOtp(false);
     }
   };
 
   const handleVerifyOtp = async () => {
     if (!otp || otp.length !== 6) {
-      return alert("Enter the 6-digit OTP");
+       return toast.error("Enter the 6-digit OTP");
     }
     try {
       setVerifyingOtp(true);
@@ -64,11 +64,11 @@ const Register = () => {
         email: formData.email,
         otp,
       });
-      alert(res.data.message || "Email verified");
-      setEmailVerified(true);
+        toast.success(res.data.message || "Email verified");
+       setEmailVerified(true);
     } catch (err) {
-      alert(err.response?.data?.message || "Invalid or expired OTP");
-    } finally {
+      toast.error(err.response?.data?.message || "Invalid or expired OTP");
+     } finally {
       setVerifyingOtp(false);
     }
   };
@@ -77,12 +77,12 @@ const Register = () => {
     e.preventDefault();
 
     if (!emailVerified) {
-      return alert("Please verify your email with OTP before registering");
-    }
+       return toast.error("Please verify your email with OTP before registering");
+}
 
     if (formData.password !== formData.confirmPassword) {
-      return alert("Passwords do not match");
-    }
+      return toast.error("Passwords do not match");
+}
 
     try {
       setLoading(true);
@@ -91,11 +91,10 @@ const Register = () => {
 
       const res = await api.post("/auth/register", data);
 
-      alert(res.data.message || "Registration Successful");
-
+     toast.success(res.data.message || "Registration Successful");
       navigate("/login");
     } catch (err) {
-      alert(
+       toast.error(
         err.response?.data?.message || "Registration Failed"
       );
     } finally {
