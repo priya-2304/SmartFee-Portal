@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { TableSkeleton } from '../components/Skeletons';
-import { FiSearch, FiX, FiUser, FiAward, FiCreditCard } from 'react-icons/fi';
+import { FiSearch, FiX, FiUser, FiAward, FiCreditCard, FiTrash2 } from 'react-icons/fi';
 
 const AllStudentsPage = () => {
   const [students, setStudents] = useState([]);
@@ -10,6 +10,7 @@ const AllStudentsPage = () => {
   const [selected, setSelected] = useState(null); 
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchStudents = async (q = '') => {
     setLoading(true);
@@ -42,6 +43,24 @@ const AllStudentsPage = () => {
   };
 
   const closeDetail = () => { setSelected(null); setDetail(null); };
+
+  const handleDelete = async (student) => {
+    const confirmed = window.confirm(
+      `Delete ${student.name} (${student.enrollmentNo})? This will permanently remove the student and all their fee, transaction, and scholarship records. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await api.delete(`/admin/students/${student._id}`);
+      setStudents((prev) => prev.filter((s) => s._id !== student._id));
+      closeDetail();
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to delete student');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -102,7 +121,17 @@ const AllStudentsPage = () => {
           <div className="relative w-full max-w-md h-full glass border-l border-white/30 dark:border-gray-700/50 p-5 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2"><FiUser /> {selected.name}</h2>
-              <button onClick={closeDetail}><FiX size={20} /></button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleDelete(selected)}
+                  disabled={deleting}
+                  title="Delete student"
+                  className="text-red-500 hover:text-red-600 disabled:opacity-50"
+                >
+                  <FiTrash2 size={18} />
+                </button>
+                <button onClick={closeDetail}><FiX size={20} /></button>
+              </div>
             </div>
 
             <div className="text-sm text-gray-500 space-y-1 mb-4">

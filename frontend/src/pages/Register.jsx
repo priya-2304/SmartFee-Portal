@@ -122,7 +122,7 @@ const Register = () => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <input
@@ -132,11 +132,11 @@ const Register = () => {
             value={formData.enrollmentNo}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
          
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="email"
               name="email"
@@ -145,13 +145,13 @@ const Register = () => {
               onChange={handleChange}
               required
               disabled={emailVerified}
-              className="flex-1 border rounded-lg px-4 py-2 disabled:bg-gray-100"
+              className="flex-1 min-w-0 border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400 disabled:bg-gray-100"
             />
             <button
               type="button"
               onClick={handleSendOtp}
               disabled={sendingOtp || emailVerified || !formData.email}
-              className="whitespace-nowrap bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white px-4 rounded-lg text-sm font-medium"
+              className="whitespace-nowrap bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white px-4 py-2 sm:py-0 rounded-lg text-sm font-medium"
             >
               {emailVerified ? "Verified ✓" : sendingOtp ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
             </button>
@@ -159,7 +159,7 @@ const Register = () => {
 
           
           {otpSent && !emailVerified && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 inputMode="numeric"
@@ -167,13 +167,13 @@ const Register = () => {
                 placeholder="Enter 6-digit OTP"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                className="flex-1 border rounded-lg px-4 py-2"
+                className="flex-1 min-w-0 border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
               />
               <button
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={verifyingOtp}
-                className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 rounded-lg text-sm font-medium"
+                className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 py-2 sm:py-0 rounded-lg text-sm font-medium"
               >
                 {verifyingOtp ? "Verifying..." : "Verify OTP"}
               </button>
@@ -190,7 +190,7 @@ const Register = () => {
             pattern="[6-9][0-9]{9}"
             title="Enter a valid 10-digit phone number"
             maxLength={10}
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <input
@@ -200,7 +200,7 @@ const Register = () => {
             value={formData.branch}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <input
@@ -212,7 +212,7 @@ const Register = () => {
             value={formData.year}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <input
@@ -222,7 +222,7 @@ const Register = () => {
             value={formData.batch}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <input
@@ -232,7 +232,7 @@ const Register = () => {
             value={formData.password}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <input
@@ -242,7 +242,7 @@ const Register = () => {
             value={formData.confirmPassword}
             onChange={handleChange}
             required
-            className="w-full border rounded-lg px-4 py-2"
+            className="w-full border rounded-lg px-4 py-2 bg-white text-gray-900 placeholder-gray-400"
           />
 
           <button

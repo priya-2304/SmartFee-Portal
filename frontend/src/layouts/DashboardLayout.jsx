@@ -2,9 +2,9 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  FiHome, FiCreditCard, FiClock, FiFileText, FiUsers, 
+  FiHome, FiCreditCard, FiClock, FiFileText, FiUsers,
   FiSettings, FiUser, FiLogOut, FiSun, FiMoon, FiMenu, FiX,
-  FiBarChart2, FiAlertCircle,FiAward,FiUserPlus , FiUploadCloud,
+  FiBarChart2, FiAlertCircle, FiAward, FiUserPlus, FiUploadCloud,
 } from 'react-icons/fi';
 import { logout } from '../store/slices/authSlice';
 import { toggleDarkMode, toggleSidebar, closeSidebar } from '../store/slices/uiSlice';
@@ -22,12 +22,12 @@ const studentLinks = [
 
 const staffLinks = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: FiBarChart2 },
-   { to: '/admin/students', label: 'Students', icon: FiUsers },
+  { to: '/admin/students', label: 'Students', icon: FiUsers },
   { to: '/admin/defaulters', label: 'Defaulters', icon: FiAlertCircle },
   { to: '/admin/scholarships', label: 'Scholarships', icon: FiAward },
-  { to: '/admin/fee-structure', label: 'Fee Structure', icon: FiFileText , adminOnly: true },
+  { to: '/admin/fee-structure', label: 'Fee Structure', icon: FiFileText, adminOnly: true },
   { to: '/admin/csv-upload', label: 'CSV Upload', icon: FiUploadCloud, adminOnly: true },
-  { to: '/admin/transactions', label: 'Transactions', icon: FiUsers , adminOnly: true },
+  { to: '/admin/transactions', label: 'Transactions', icon: FiUsers, adminOnly: true },
   { to: '/admin/staff', label: 'Manage Staff', icon: FiUserPlus, adminOnly: true },
   { to: '/profile', label: 'Profile', icon: FiUser },
   { to: '/settings', label: 'Settings', icon: FiSettings },
@@ -39,9 +39,9 @@ const DashboardLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
- const links = user?.role === 'student'
-  ? studentLinks
-  : staffLinks.filter((l) => !l.adminOnly || user?.role === 'admin');
+  const links = user?.role === 'student'
+    ? studentLinks
+    : staffLinks.filter((l) => !l.adminOnly || user?.role === 'admin');
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
@@ -56,19 +56,16 @@ const DashboardLayout = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky lg:top-0 lg:h-screen z-30 inset-y-0 left-0 w-64 flex-shrink-0 transform ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out glass border-r border-white/30 dark:border-gray-700/50 flex flex-col`}
+        className={`fixed lg:sticky lg:top-0 lg:h-screen z-30 inset-y-0 left-0 w-72 sm:w-64 flex-shrink-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform duration-300 ease-in-out glass border-r border-white/30 dark:border-gray-700/50 flex flex-col`}
       >
-        {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b border-white/20 dark:border-gray-700/50">
           <div>
             <span className="text-base font-bold text-primary-700 dark:text-primary-300 block leading-tight">
-              SmartFee
+              Geeta University
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Portal</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">SmartFee Portal</span>
           </div>
           <button
             className="lg:hidden p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -78,18 +75,16 @@ const DashboardLayout = () => {
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 p-2 sm:p-3 space-y-1 overflow-y-auto">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               onClick={() => dispatch(closeSidebar())}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-gray-700/60 hover:text-primary-700 dark:hover:text-white'
+                `flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-gray-700/60 hover:text-primary-700 dark:hover:text-white'
                 }`
               }
             >
@@ -98,16 +93,14 @@ const DashboardLayout = () => {
             </NavLink>
           ))}
         </nav>
-
-        {/* User + Logout */}
-        <div className="p-3 border-t border-white/20 dark:border-gray-700/50 space-y-1">
+        <div className="p-2 sm:p-3 border-t border-white/20 dark:border-gray-700/50 space-y-2">
           <button
             onClick={() => navigate('/profile')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/60 hover:bg-primary-50 dark:hover:bg-gray-700/60 transition-colors text-left"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl  bg-gray-50 dark:bg-gray-800/60 hover:bg-primary-50 dark:hover:bg-gray-700/60 transition-colors text-left"
             title="View Profile"
           >
             {user?.profilePicUrl ? (
-              <img src={user.profilePicUrl?.startsWith('http')? user.profilePicUrl:`${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`} alt="" className="w-8 h-8 rounded-full object-cover" />):(
+              <img src={user.profilePicUrl?.startsWith('http') ? user.profilePicUrl : `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`} alt="" className="w-8 h-8 rounded-full object-cover" />) : (
               <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
                 {user?.name?.charAt(0) || 'U'}
               </div>
@@ -126,10 +119,9 @@ const DashboardLayout = () => {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:max-h-screen lg:overflow-y-auto">
-        {/* Top bar */}
-        <header className="glass sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/30 dark:border-gray-700/50">
+    
+        <header className="glass sticky top-0 z-10 flex items-center justify-between px-3 sm:px-4 lg:px-6 py-3 border-b border-white/30 dark:border-gray-700/50">
           <button
             className="lg:hidden p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             onClick={() => dispatch(toggleSidebar())}
@@ -141,12 +133,13 @@ const DashboardLayout = () => {
             {user?.role} Portal
           </div>
 
-          {/* Mobile: show app name in center */}
-          <div className="lg:hidden font-bold text-sm text-primary-700 dark:text-primary-300 absolute left-1/2 -translate-x-1/2">
-            SmartFee Portal
+          <div className="lg:hidden absolute left-[44%] -translate-x-1/2 max-w-[45%]">
+            <p className="text-sm font-bold text-primary-700 dark:text-primary-300 truncate whitespace-nowrap text-center">
+              SmartFee Portal
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <button
               onClick={() => dispatch(toggleDarkMode())}
               className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -163,12 +156,12 @@ const DashboardLayout = () => {
             >
               {user?.profilePicUrl ? (
                 <img
-                 src={user.profilePicUrl?.startsWith('http') ? user.profilePicUrl : `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`}
+                  src={user.profilePicUrl?.startsWith('http') ? user.profilePicUrl : `${API_ORIGIN}${user.profilePicUrl}?t=${Date.now()}`}
                   alt=""
-                  className="w-8 h-8 rounded-full object-cover border-2 border-primary-200 hover:opacity-80 transition-opacity"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-primary-200 hover:opacity-80 transition-opacity"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold hover:opacity-80 transition-opacity">
                   {user?.name?.charAt(0) || 'U'}
                 </div>
               )}
@@ -176,7 +169,7 @@ const DashboardLayout = () => {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-5 lg:p-6">
+        <main className="flex-1 p-3 sm:p-5 lg:p-6 overflow-x-hidden">
           <Outlet />
         </main>
       </div>
