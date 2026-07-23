@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useRef, useState } from 'react';
 import { FiBell } from 'react-icons/fi';
 import api from '../api/axios';
@@ -14,12 +16,13 @@ const NotificationBell = () => {
       const res = await api.get('/notifications');
       setNotifications(res.data.notifications || []);
     } catch (e) {
+     
     }
   };
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(fetchNotifications, 30000); // har 30 sec me refresh
     return () => clearInterval(interval);
   }, []);
 
@@ -54,7 +57,7 @@ const NotificationBell = () => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto glass rounded-xl border border-white/30 dark:border-gray-700/50 shadow-lg z-40">
+        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-80 max-h-96 overflow-y-auto glass rounded-xl border border-white/30 dark:border-gray-700/50 shadow-lg z-40">
           <div className="px-4 py-2.5 border-b border-white/20 dark:border-gray-700/50 font-semibold text-sm">
             Notifications
           </div>
