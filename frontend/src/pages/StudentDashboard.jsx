@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { fetchStudentFees } from '../store/slices/feeSlice';
 import StatCard from '../components/StatCard';
 import { CardSkeleton } from '../components/Skeletons';
-import { FiDollarSign, FiCheckCircle, FiAlertTriangle, FiCalendar, FiAward, FiArrowRight } from 'react-icons/fi';
-
+import {  FiCheckCircle, FiAlertTriangle, FiCalendar, FiAward, FiArrowRight } from 'react-icons/fi';
+import { FaRupeeSign } from 'react-icons/fa';
 const StudentDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -18,7 +18,6 @@ const StudentDashboard = () => {
       dispatch(fetchStudentFees(user.id));
     }
   }, [dispatch, user]);
-
   const availableSemesters = useMemo(() => {
     if (!feeHeads?.length) return [];
     const valid = feeHeads
@@ -31,8 +30,7 @@ const StudentDashboard = () => {
     if (availableSemesters.length > 0 && !availableSemesters.includes(Number(selectedSemester))) {
       setSelectedSemester(String(availableSemesters[0]));
     }
-  }, [availableSemesters]); 
-
+  }, [availableSemesters]);
   const filteredFeeHeads = useMemo(() => {
     if (!feeHeads || !selectedSemester) return [];
     return feeHeads.filter((f) => String(f.semester) === String(selectedSemester));
@@ -92,7 +90,7 @@ const StudentDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <StatCard label="Total Fees" value={`₹${semesterSummary.totalFees.toLocaleString()}`} icon={FiDollarSign} accent="primary" />
+          <StatCard label="Total Fees" value={`₹${semesterSummary.totalFees.toLocaleString()}`} icon={FaRupeeSign} accent="primary" />
           <StatCard label="Paid" value={`₹${semesterSummary.paidFees.toLocaleString()}`} icon={FiCheckCircle} accent="green" />
           <StatCard label="Pending" value={`₹${semesterSummary.pendingFees.toLocaleString()}`} icon={FiAlertTriangle} accent="red" />
           <StatCard
@@ -105,6 +103,7 @@ const StudentDashboard = () => {
         </div>
       )}
 
+      {/* Progress bar — selected semester */}
       {semesterSummary.totalFees > 0 && (
         <div className="card">
           <div className="flex justify-between text-sm mb-2">
@@ -126,6 +125,7 @@ const StudentDashboard = () => {
         </div>
       )}
 
+      {/* Fee heads table */}
       <div className="card">
         <h2 className="font-semibold mb-4">Fee Details</h2>
         <div className="table-wrap">
