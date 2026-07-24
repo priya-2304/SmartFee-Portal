@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.example
+uploads/receipts/*.pdf
+uploads/csv/*.csv
+!uploads/receipts/.gitkeep
+!uploads/csv/.gitkeep

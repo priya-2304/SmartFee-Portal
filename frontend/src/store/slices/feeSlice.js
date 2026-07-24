@@ -44,9 +44,9 @@ export const verifyPayment = createAsyncThunk('fee/verifyPayment', async (payloa
 // "Pay All at Once" — single combined order for multiple fee heads
 export const initiateBulkPayment = createAsyncThunk(
   'fee/initiateBulkPayment',
-  async ({ feePaymentIds, paymentMethod }, { rejectWithValue }) => {
+  async ({ feePaymentIds, paymentMethod, amount }, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/payments/initiate-bulk', { feePaymentIds, paymentMethod });
+      const { data } = await api.post('/payments/initiate-bulk', { feePaymentIds, paymentMethod, amount });
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Could not initiate payment');
@@ -62,8 +62,6 @@ export const verifyBulkPayment = createAsyncThunk('fee/verifyBulkPayment', async
     return rejectWithValue(err.response?.data?.message || 'Payment verification failed');
   }
 });
-
-// Semester-wise fee dashboard (MongoDB aggregation on the backend)
 export const fetchFeeDashboard = createAsyncThunk('fee/fetchFeeDashboard', async (studentId, { rejectWithValue }) => {
   try {
     const { data } = await api.get(`/fees/student/${studentId}/dashboard`);

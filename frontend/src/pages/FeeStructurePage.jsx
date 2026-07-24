@@ -28,7 +28,6 @@ const FeeStructurePage = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  // Individual (per-student) fee add state
   const [showIndividualForm, setShowIndividualForm] = useState(false);
   const [studentQuery, setStudentQuery] = useState('');
   const [studentResults, setStudentResults] = useState([]);
@@ -239,9 +238,7 @@ const FeeStructurePage = () => {
           </table>
         </div>
       )}
-
-      {/* Create / Edit fee structure modal */}
-      {showForm && (
+     {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
@@ -297,9 +294,7 @@ const FeeStructurePage = () => {
           </div>
         </div>
       )}
-
-      {/* Add Individual Student Fee modal */}
-      {showIndividualForm && (
+  {showIndividualForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">

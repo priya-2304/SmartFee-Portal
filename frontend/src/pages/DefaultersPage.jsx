@@ -11,7 +11,7 @@ const DefaultersPage = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get('/accounts/defaulters')
+    api.get('/admin/defaulters')
       .then((res) => setDefaulters(res.data.defaulters))
       .finally(() => setLoading(false));
   }, []);
@@ -33,8 +33,12 @@ const DefaultersPage = () => {
 
   const sendSingle = async (id) => {
     try {
-      await api.post('/notifications/bulk-reminder', { studentIds: [id] });
-      toast.success('Reminder sent');
+      const res = await api.post('/notifications/bulk-reminder', { studentIds: [id] });
+      if (res.data.failed > 0) {
+        toast.error(res.data.message);
+      } else {
+        toast.success(res.data.message || 'Reminder sent');
+      }
     } catch { toast.error('Failed'); }
   };
 
@@ -42,7 +46,11 @@ const DefaultersPage = () => {
     if (!selected.length) return toast.error('Select at least one student');
     try {
       const res = await api.post('/notifications/bulk-reminder', { studentIds: selected });
-      toast.success(res.data.message);
+      if (res.data.failed > 0) {
+        toast.error(res.data.message);
+      } else {
+        toast.success(res.data.message);
+      }
       setSelected([]);
     } catch { toast.error('Failed to send reminders'); }
   };

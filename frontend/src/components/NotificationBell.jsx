@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import { FiBell } from 'react-icons/fi';
 import api from '../api/axios';
@@ -16,8 +14,7 @@ const NotificationBell = () => {
       const res = await api.get('/notifications');
       setNotifications(res.data.notifications || []);
     } catch (e) {
-     
-    }
+      }
   };
 
   useEffect(() => {

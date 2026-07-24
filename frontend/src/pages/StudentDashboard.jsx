@@ -102,9 +102,7 @@ const StudentDashboard = () => {
           <StatCard label="Scholarship" value={`₹${semesterSummary.scholarshipApplied.toLocaleString()}`} icon={FiAward} accent="primary" />
         </div>
       )}
-
-      {/* Progress bar — selected semester */}
-      {semesterSummary.totalFees > 0 && (
+   {semesterSummary.totalFees > 0 && (
         <div className="card">
           <div className="flex justify-between text-sm mb-2">
             <span className="font-medium">Payment Progress</span>
@@ -124,9 +122,7 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Fee heads table */}
-      <div className="card">
+    <div className="card">
         <h2 className="font-semibold mb-4">Fee Details</h2>
         <div className="table-wrap">
           <table className="w-full text-sm">

@@ -6,11 +6,12 @@ const storedUser = localStorage.getItem('smartfee_user');
 
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async ({ enrollmentNo, password }, { rejectWithValue }) => {
+  async ({ enrollmentNo, password, role }, { rejectWithValue }) => {
     try {
       const { data } = await api.post('/auth/login', {
         enrollmentNo,
         password,
+        role,
       });
       return data;
     } catch (err) {
