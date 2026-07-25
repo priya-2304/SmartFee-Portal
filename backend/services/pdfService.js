@@ -138,7 +138,7 @@ const generateReceiptPdf = async ({ receiptNumber, student, feeHead, amount, tra
     ['Branch / Year', `${student.branch} / Year ${student.year}`],
     ['Fee Head', feeHead],
     ['Transaction ID', transactionId],
-    ['Date & Time', new Date(paidAt).toLocaleString('en-IN')],
+    ['Date & Time', new Date(paidAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })],
   ]);
 
   drawAmountBanner(doc, 'AMOUNT PAID', amount);
@@ -169,7 +169,7 @@ const generateBulkReceiptPdf = async ({ receiptNumber, student, items, totalAmou
     ['Enrollment Number', student.enrollmentNo],
     ['Branch / Year', `${student.branch} / Year ${student.year}`],
     ['Transaction ID', transactionId],
-    ['Date & Time', new Date(paidAt).toLocaleString('en-IN')],
+    ['Date & Time', new Date(paidAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })],
   ]);
 
   drawInfoCard(
