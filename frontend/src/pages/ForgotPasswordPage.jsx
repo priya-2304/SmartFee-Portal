@@ -170,7 +170,9 @@ const ForgotPasswordPage = () => {
         <div className="text-center mt-5">
           <Link
             to="/login"
-            className="text-primary-600 hover:underline"> Back to Login
+            className="text-primary-600 hover:underline"
+          >
+            Back to Login
           </Link>
         </div>
 

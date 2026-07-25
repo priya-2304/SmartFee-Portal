@@ -13,9 +13,7 @@ const getRazorpayInstance = () => {
   return instance;
 };
 
-/**
- * Creates a Razorpay order for the given amount (in INR rupees; converted to paise internally).
- */
+
 const createOrder = async (amount, receipt) => {
   const razorpay = getRazorpayInstance();
   return razorpay.orders.create({
@@ -26,9 +24,6 @@ const createOrder = async (amount, receipt) => {
   });
 };
 
-/**
- * Verifies the Razorpay payment signature returned by checkout.js after a successful payment.
- */
 const verifySignature = ({ razorpay_order_id, razorpay_payment_id, razorpay_signature }) => {
   const generatedSignature = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)

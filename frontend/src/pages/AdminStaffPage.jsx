@@ -35,7 +35,6 @@ const AdminStaffPage = () => {
       <form onSubmit={handleSubmit} className="card space-y-3">
         <select name="role" value={form.role} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm">
           <option value="hod">HOD</option>
-          <option value="admin">Admin</option>
         </select>
 
         <input name="name" value={form.name} onChange={handleChange} placeholder="Full name" required

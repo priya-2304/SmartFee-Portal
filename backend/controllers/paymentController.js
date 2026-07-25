@@ -60,10 +60,6 @@ const initiateBulkPayment = asyncHandler(async (req, res) => {
   if (totalAmount <= 0) {
     return res.status(400).json({ success: false, message: 'No pending balance to pay' });
   }
-
-  // `amount` lets the student pay less than the full combined balance of the
-  // selected fee heads (a "partial" bulk payment). If omitted, default to the
-  // full total so the existing "Pay Full Fee at Once" flow is unaffected.
   const payAmount = amount === undefined || amount === null ? totalAmount : Number(amount);
   if (!Number.isFinite(payAmount) || payAmount <= 0 || payAmount > totalAmount) {
     return res.status(400).json({
@@ -95,8 +91,9 @@ const initiateBulkPayment = asyncHandler(async (req, res) => {
 
 const verifyBulkPayment = asyncHandler(async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, feePaymentIds } = req.body;
-
+console.log("Verify Bulk Body:", req.body);
   const isValid = verifySignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature });
+  console.log("Signature Valid:", isValid);
   if (!isValid) {
     await Transaction.findOneAndUpdate(
       { gatewayReference: razorpay_order_id },
@@ -106,6 +103,7 @@ const verifyBulkPayment = asyncHandler(async (req, res) => {
   }
 
   const pendingTransaction = await Transaction.findOne({ gatewayReference: razorpay_order_id });
+  console.log("Pending Transaction:", pendingTransaction);
   if (!pendingTransaction) return res.status(404).json({ success: false, message: 'Transaction not found' });
 
   if (String(pendingTransaction.studentId) !== String(req.user._id)) {
@@ -137,9 +135,6 @@ const verifyBulkPayment = asyncHandler(async (req, res) => {
   const feePaymentsById = new Map(feePayments.map((fp) => [String(fp._id), fp]));
   const orderedFeePayments = orderedIds.map((id) => feePaymentsById.get(id)).filter(Boolean);
 
-  // First pass: apply the payment across the selected fee heads (in order)
-  // without generating any PDF yet, so we know exactly which heads/amounts
-  // need to go into a single combined receipt.
   let remainingAmount = transaction.amount;
   const feeItems = [];
   const touchedPayments = [];
@@ -164,8 +159,6 @@ const verifyBulkPayment = asyncHandler(async (req, res) => {
     touchedPayments.push(feePayment);
   }
 
-  // One combined receipt for the whole bulk payment, instead of a separate
-  // PDF per fee head — every fee record involved points at the same file.
   const receiptNumber = `RCPT-${Date.now()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
   const receiptUrl = await generateBulkReceiptPdf({
     receiptNumber,
@@ -204,8 +197,9 @@ const verifyBulkPayment = asyncHandler(async (req, res) => {
 
 const verifyPayment = asyncHandler(async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, feePaymentId } = req.body;
-
+console.log("Verify Body:", req.body);
   const isValid = verifySignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature });
+  console.log("Signature Valid:", isValid);
   if (!isValid) {
     await Transaction.findOneAndUpdate(
       { gatewayReference: razorpay_order_id },
@@ -215,6 +209,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
   }
 
   const pendingTransaction = await Transaction.findOne({ gatewayReference: razorpay_order_id });
+  console.log("Pending Transaction:", pendingTransaction);
   if (!pendingTransaction) return res.status(404).json({ success: false, message: 'Transaction not found' });
 
   if (String(pendingTransaction.studentId) !== String(req.user._id)) {

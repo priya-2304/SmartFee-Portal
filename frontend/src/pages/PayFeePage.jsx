@@ -344,7 +344,7 @@ const PayFeePage = () => {
               return (
                 <button
                   key={f._id}
-                  disabled={isPaid || mode === 'full'}
+                  disabled={isPaid}
                   onClick={() => mode === 'individual' && !isPaid && toggleHead(f)}
                   className={`w-full text-left card transition-all ${
                     isPaid

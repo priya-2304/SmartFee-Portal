@@ -10,6 +10,3 @@ export const store = configureStore({
     ui: uiReducer,
   },
 });
-
-
-export default store;

@@ -142,8 +142,6 @@ const deleteFeeStructure = asyncHandler(async (req, res) => {
   const structure = await FeeStructure.findByIdAndDelete(req.params.id);
   if (!structure) return res.status(404).json({ success: false, message: 'Fee structure not found' });
 
-  // Without this, FeePayment records tied to this structure stay orphaned
-  // and keep inflating Pending Dues / Defaulters on the dashboard.
   const orphanedPayments = await FeePayment.find({ feeStructureId: structure._id }).select('_id');
   const orphanedPaymentIds = orphanedPayments.map((p) => p._id);
 
